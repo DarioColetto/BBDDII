@@ -1,0 +1,30 @@
+use('empresa');
+
+/*Inserta ventas*/
+db.ventas.insertMany([
+    { producto: "Laptop", cantidad: 2, precio_unitario: 1000 },
+    { producto: "Mouse", cantidad: 5, precio_unitario: 20 },
+    { producto: "Teclado", cantidad: 3, precio_unitario: 30 },
+    { producto: "Laptop", cantidad: 1, precio_unitario: 1000 },
+    { producto: "Monitor", cantidad: 4, precio_unitario: 200 }
+]);
+
+/*
+Dada una colección ventas con campos producto, cantidad y precio_unitario, calcula el total de ventas por producto usando $group y $sum.
+*/
+
+db.ventas.aggregate([
+    {
+        $group: {
+            _id: "$producto",
+            total_ventas: { $sum: { $multiply: ["$cantidad", "$precio_unitario"] } }
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            producto: "$_id",
+            total_ventas: 1
+        }
+    }
+]);

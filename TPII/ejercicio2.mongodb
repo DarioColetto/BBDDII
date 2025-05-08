@@ -1,0 +1,105 @@
+use("empresa");
+
+/* Inserción de datos */
+
+// db.empleados.insertMany([
+//     {
+//         "nombre": "Juan",
+//         "edad": 30,
+//         "puesto": "Desarrollador"
+//     },
+//     {
+//         "nombre": "Ana",
+//         "edad": 26,
+//         "puesto": "Diseñadora"
+//     },
+//     {
+//         "nombre": "Luis",
+//         "edad": 35,
+//         "puesto": "Gerente"
+//     },
+//     {
+//         "nombre": "Maria",
+//         "edad": 28,
+//         "puesto": "Recursos Humanos"
+//     },
+//     {
+//         "nombre": "Pedro",
+//         "edad": 40,
+//         "puesto": "Finanzas"
+//     },
+//     {
+//         "nombre": "Laura",
+//         "edad": 32,
+//         "puesto": "Ventas"
+//     },
+//     {
+//         "nombre": "Javier",
+//         "edad": 29,
+//         "puesto": "Marketing"
+//     },
+//     {
+//         "nombre": "Sofia",
+//         "edad": 27,
+//         "puesto": "IT"
+//     },
+//     {
+//         "nombre": "Carlos",
+//         "edad": 38,
+//         "puesto": "Recursos Humanos"
+//     },
+//     {
+//         "nombre": "Elena",
+//         "edad": 31,
+//         "puesto": "Finanzas"
+//     },
+//     {
+//         "nombre": "Andres",
+//         "edad": 26,
+//         "puesto": "Ventas"
+//     },
+//     {
+//         "nombre": "Patricia",
+//         "edad": 34,
+//         "puesto": "Marketing"
+//     },
+//     {
+//         "nombre": "Fernando",
+//         "edad": 39,
+//         "puesto": "IT"
+//     },
+//     {
+//         "nombre": "Isabel",
+//         "edad": 33,
+//         "puesto": "Recursos Humanos"
+//     },
+//     {
+//         "nombre": "Diego",
+//         "edad": 37,
+//         "puesto": "Finanzas"
+//     }
+// ]);
+
+
+
+/*Consulta todos los empleados cuya edad esté entre 25 y 40 años. Usa operadores relacionales y lógicos. */
+
+/* Consulta con $and */
+db.empleados.find({
+  $and: [{ edad: { $gte: 35 } }, { edad: { $lte: 40 } }],
+});
+
+/* Consulta con $or */
+db.empleados.find({
+  $or: [{ edad: { $eq: 26 } }, { edad: { $eq: 40 } }],
+});
+
+/* Consulta con $nor */
+db.empleados.find({
+  $nor: [{ edad: { $eq: 26 } }, { edad: { $eq: 40 } }],
+});
+
+/* Consulta con $not */
+db.empleados.find({
+  puesto: { $not: { $eq: "Desarrollador" } },
+});

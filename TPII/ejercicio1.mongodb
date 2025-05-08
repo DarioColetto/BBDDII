@@ -1,0 +1,17 @@
+/* 1-Crea una base de datos llamada empresa. */
+use("empresa");
+
+/* 2- Agrega una colección empleados con 3 documentos que incluyan
+ nombre, edad y puesto.*/
+db.createCollection("empleados");
+db.empleados.insertMany([
+  { nombre: "Ana", edad: 30, puesto: "Gerente" },
+  { nombre: "Luis", edad: 25, puesto: "Desarrollador" },
+  { nombre: "Sofia", edad: 28, puesto: "Pasante" },
+]);
+
+/*3-Actualiza la edad de uno de los empleados */
+db.empleados.update({ nombre: "Ana" }, { $set: { edad: 23 } });
+
+/*4- Elimina al empleado que tenga el puesto de "pasante".*/
+db.empleados.deleteOne({ puesto: "Pasante" });

@@ -1,0 +1,46 @@
+/**Ejercicio 7: Referencias Crea una colección cursos y una colección alumnos. Luego inserta documentos donde los alumnos tengan una lista de id_curso referenciando a los cursos. */
+use("universidad");
+
+db.cursos.insertMany([
+  { nombre: "Matemáticas", duracion: 3, creditos: 6 },
+  { nombre: "Física", duracion: 4, creditos: 8 },
+  { nombre: "Química", duracion: 2, creditos: 4 },
+  { nombre: "Biología", duracion: 3, creditos: 6 },
+]);
+
+// Busco los id de los cursos para insertarlos en la colección alumnos y así crear la referencia
+db.cursos.find();
+
+// Inserto los alumnos con el id de los cursos que he creado anteriormente
+
+db.alumnos.insertMany([
+  {
+    nombre: "Juan",
+    edad: 20,
+    id_cursos: [
+      ObjectId("681b8746eaa5fc9749c3ee1b"),
+      ObjectId("681b8746eaa5fc9749c3ee1c"),
+    ],
+  },
+  {
+    nombre: "Ana",
+    edad: 22,
+    id_cursos: [ObjectId("681b8746eaa5fc9749c3ee1c")],
+  },
+  {
+    nombre: "Luis",
+    edad: 21,
+    id_cursos: [
+      ObjectId("681b8746eaa5fc9749c3ee1d"),
+      ObjectId("681b8746eaa5fc9749c3ee1d"),
+    ],
+  },
+  {
+    nombre: "María",
+    edad: 23,
+    id_cursos: [
+      ObjectId("681b8746eaa5fc9749c3ee1d"),
+      ObjectId("681b8746eaa5fc9749c3ee1b"),
+    ],
+  },
+]);

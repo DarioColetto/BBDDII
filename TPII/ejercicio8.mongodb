@@ -1,0 +1,20 @@
+use('universidad');
+
+db.alumnos.aggregate([
+    {
+        $lookup: {
+            from: "cursos",
+            localField: "id_cursos",
+            foreignField: "_id",
+            as: "cursos_info"
+        }
+    },
+    {
+        $project: {
+            _id: 0,
+            nombre: 1,
+            edad: 1,
+            cursos_info: { nombre: "$cursos_info.nombre", duracion: "$cursos_info.duracion" }
+        }
+    }
+]);
