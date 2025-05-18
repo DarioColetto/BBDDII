@@ -1,0 +1,72 @@
+db.ventas.aggregate([
+   
+    {
+      $project: {
+        _id: 0,
+        anio_mes: { $dateToString: { format: "%Y-%m", date: "$fecha" } },
+        producto_id: 1,
+        cantidad: 1,
+        total: 1
+      }
+    },
+  
+    
+    {
+      $group: {
+        _id: { mes: "$anio_mes", producto_id: "$producto_id" },
+        total_ventas_mes_producto: { $sum: "$total" },
+        cantidad_vendida_mes_producto: { $sum: "$cantidad" }
+      }
+    },
+  
+    
+    {
+      $group: {
+        _id: "$_id.mes",
+        total_ventas_mes: { $sum: "$total_ventas_mes_producto" },
+        productos_vendidos: {
+          $push: {
+            producto_id: "$_id.producto_id",
+            cantidad_vendida: "$cantidad_vendida_mes_producto"
+          }
+        }
+      }
+    },
+  
+    
+    {
+      $project: {
+        _id: 1,
+        total_ventas_mes: 1,
+        producto_mas_vendido: {
+          $arrayElemAt: [
+            { $sortArray: { input: "$productos_vendidos", sortBy: { cantidad_vendida: -1 } } },
+            0
+          ]
+        }
+      }
+    },
+  
+    
+    {
+      $lookup: {
+        from: "productos",
+        localField: "producto_mas_vendido.producto_id",
+        foreignField: "_id",
+        as: "info_producto_mas_vendido"
+      }
+    },
+    {
+      $unwind: "$info_producto_mas_vendido"
+    },
+  
+    {
+      $project: {
+        _id: 0,
+        mes: "$_id",
+        total_ventas: "$total_ventas_mes",
+        producto_mas_vendido: "$info_producto_mas_vendido.nombre",
+        cantidad_mas_vendida: "$producto_mas_vendido.cantidad_vendida"
+      }
+    }
+  ])

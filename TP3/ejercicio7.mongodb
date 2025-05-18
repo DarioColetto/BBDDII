@@ -1,0 +1,26 @@
+db.ventas.aggregate([
+    {
+      $project: {
+        _id: 1,
+        producto_id: 1,
+        total: 1,
+        categoria_venta: {
+          $switch: {
+            branches: [
+              { case: { $lt: [ "$total", 200 ] }, then: "Pequeña" },
+              { case: { $and: [ { $gte: [ "$total", 200 ] }, { $lte: [ "$total", 800 ] } ] }, then: "Mediana" },
+              { case: { $gt: [ "$total", 800 ] }, then: "Grande" }
+            ],
+            default: "Sin Clasificar"
+          }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: "$categoria_venta",
+        total_ventas: { $sum: "$total" }, 
+        conteo_ventas: { $sum: 1 } 
+      }
+    }
+  ])

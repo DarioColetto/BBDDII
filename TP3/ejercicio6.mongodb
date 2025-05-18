@@ -1,0 +1,20 @@
+db.ventas.aggregate([
+    {
+      $project: {
+        _id: 0,
+        anio_mes: { $dateToString: { format: "%Y-%m", date: "$fecha" } },
+        total: 1
+      }
+    },
+    {
+      $group: {
+        _id: "$anio_mes",
+        total_ventas_mes: { $sum: "$total" }
+      }
+    },
+    {
+      $sort: { _id: 1 } 
+    }
+  ])
+
+  //Noto que al parecer hay solo un mes el 03

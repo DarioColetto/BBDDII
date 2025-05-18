@@ -1,0 +1,79 @@
+db.ventas.aggregate([
+    // 'join' de la info de producto y ventas
+    {
+      $lookup: {
+        from: "productos",
+        localField: "producto_id",
+        foreignField: "_id",
+        as: "info_producto"
+      }
+    },
+    {
+      $unwind: "$info_producto"
+    },
+  
+    //Agrupa las ventas por producto para calcular el total de unidades vendidas y el total generado
+    {
+      $group: {
+        _id: "$producto_id",
+        nombre_producto: { $first: "$info_producto.nombre" },
+        categoria_producto: { $first: "$info_producto.categoria" },
+        total_unidades_vendidas: { $sum: "$cantidad" },
+        monto_total_generado: { $sum: "$total" }
+      }
+    },
+  
+    // Une las valoraciones del producto desde la colección "productos"
+    {
+      $lookup: {
+        from: "productos",
+        localField: "_id", // El _id del producto agrupado
+        foreignField: "_id",
+        as: "info_valoraciones"
+      }
+    },
+    {
+      $unwind: "$info_valoraciones"
+    },
+    // Desenvuelve el array de valoraciones
+    {
+      $unwind: {
+        path: "$info_valoraciones.valoraciones",
+        preserveNullAndEmptyArrays: true 
+      }
+    },
+  
+    // Calcular la puntuación promedio de las valoraciones por producto
+    {
+      $group: {
+        _id: "$_id", // Agrupar nuevamente por _id del producto
+        nombre_producto: { $first: "$nombre_producto" },
+        categoria_producto: { $first: "$categoria_producto" },
+        total_unidades_vendidas: { $first: "$total_unidades_vendidas" },
+        monto_total_generado: { $first: "$monto_total_generado" },
+        promedio_valoracion: { $avg: "$info_valoraciones.valoraciones.puntuacion" }
+      }
+    },
+  
+    //Ordenar los productos por la cantidad total de unidades vendidas de forma descendente
+    {
+      $sort: { total_unidades_vendidas: -1 }
+    },
+  
+    //Limita los resultados a los top 3 productos
+    {
+      $limit: 3
+    },
+  
+    // Proyecta los campos para el informe final
+    {
+      $project: {
+        _id: 0,
+        nombre: "$nombre_producto",
+        categoria: "$categoria_producto",
+        unidades_vendidas: "$total_unidades_vendidas",
+        monto_generado: "$monto_total_generado",
+        puntuacion_promedio: { $ifNull: [ "$promedio_valoracion", "Sin valoraciones" ] } // Mostrar "Sin valoraciones" si no hay
+      }
+    }
+  ])

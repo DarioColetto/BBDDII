@@ -1,0 +1,27 @@
+db.productos.aggregate([
+    {
+      $group: {
+        _id: "$categoria",
+        precioPromedio: { $avg: "$precio" },
+        precioMaximo: { $max: "$precio" },
+        precioMinimo: { $min: "$precio" }
+      }
+    },
+    {
+      $sort: { precioPromedio: -1 }  
+    }
+  ]);
+  
+
+  db.ventas.aggregate([
+    {
+      $group: {
+        _id: "$cliente.pais",
+        cantidadTransacciones: { $sum: 1 },
+        montoTotal: { $sum: "$total" }
+      }
+    },
+    {
+      $sort: { montoTotal: -1 }  // Ordenado por monto total descendente
+    }
+  ]);

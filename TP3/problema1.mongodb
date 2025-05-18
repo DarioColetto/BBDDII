@@ -1,0 +1,139 @@
+db.ventas.aggregate([
+  // 1. Agrupar por cliente para calcular el total gastado y el número de compras
+  {
+    $group: {
+      _id: "$cliente.email", // Agrupamos por el email del cliente (asumiendo es único)
+      nombre_cliente: { $first: "$cliente.nombre" },
+      pais_cliente: { $first: "$cliente.pais" },
+      total_gastado: { $sum: "$total" },
+      numero_compras: { $sum: 1 },
+      primera_compra: { $min: "$fecha" },
+      ultima_compra: { $max: "$fecha" },
+      productos_comprados: {
+        $push: {
+          producto_id: "$producto_id",
+          cantidad: "$cantidad",
+          total_venta: "$total",
+          fecha: "$fecha"
+        }
+      }
+    }
+  },
+
+  // 2. Desenrollar el array de productos comprados para facilitar el análisis del producto favorito
+  {
+    $unwind: "$productos_comprados"
+  },
+
+  // 3. Agrupar por cliente y producto para contar la cantidad comprada de cada producto por cliente
+  {
+    $group: {
+      _id: { cliente_email: "$_id", producto_id: "$productos_comprados.producto_id" },
+      total_cantidad_producto: { $sum: "$productos_comprados.cantidad" },
+      productos_comprados_info: { $first: "$productos_comprados" } // Mantener la info original del producto
+    }
+  },
+
+  // 4. Volver a agrupar por cliente para encontrar el producto favorito
+  {
+    $group: {
+      _id: "$_id.cliente_email",
+      nombre_cliente: { $first: "$nombre_cliente" },
+      pais_cliente: { $first: "$pais_cliente" },
+      total_gastado: { $first: "$total_gastado" },
+      numero_compras: { $first: "$numero_compras" },
+      primera_compra: { $first: "$primera_compra" },
+      ultima_compra: { $first: "$ultima_compra" },
+      producto_favorito_info: {
+        $max: { // Usar $max en lugar de $first para encontrar el producto con la mayor cantidad
+          total_cantidad: "$total_cantidad_producto",
+          producto_id: "$_id.producto_id",
+          productos_comprados_info: "$productos_comprados_info" // Incluir la info original
+        }
+      },
+      productos_comprados_info_array: { $push: "$productos_comprados_info" } // Mantener todos los productos comprados
+    }
+  },
+
+  // 5. Unir con la colección de productos para obtener el nombre y la categoría del producto favorito
+  {
+    $lookup: {
+      from: "productos",
+      localField: "producto_favorito_info.producto_id",
+      foreignField: "_id",
+      as: "info_producto_favorito"
+    }
+  },
+  {
+    $unwind: {
+      path: "$info_producto_favorito",
+      preserveNullAndEmptyArrays: true // Por si un producto ya no existe
+    }
+  },
+
+  // 6. Desenrollar nuevamente los productos comprados para calcular el gasto por categoría
+  {
+    $unwind: "$productos_comprados_info_array"
+  },
+
+  // 7. Unir con la colección de productos para obtener la categoría de cada producto comprado
+  {
+    $lookup: {
+      from: "productos",
+      localField: "productos_comprados_info_array.producto_id",
+      foreignField: "_id",
+      as: "info_productos_comprados"
+    }
+  },
+  {
+    $unwind: "$info_productos_comprados"
+  },
+
+  // 8. Agrupar por cliente y categoría para calcular el total gastado por categoría
+  {
+    $group: {
+      _id: { cliente_email: "$_id", categoria: "$info_productos_comprados.categoria" },
+      total_gastado_categoria: { $sum: "$productos_comprados_info_array.total_venta" }
+    }
+  },
+
+  // 9. Volver a agrupar por cliente para encontrar la categoría preferida
+  {
+    $group: {
+      _id: "$_id.cliente_email",
+      nombre_cliente: { $first: "$nombre_cliente" },
+      pais_cliente: { $first: "$pais_cliente" },
+      total_gastado: { $first: "$total_gastado" },
+      numero_compras: { $first: "$numero_compras" },
+      primera_compra: { $first: "$primera_compra" },
+      ultima_compra: { $first: "$ultima_compra" },
+      producto_favorito: { $first: "$info_producto_favorito.nombre" },
+      cantidad_producto_favorito: { $first: "$producto_favorito_info.total_cantidad" },
+      gasto_por_categoria: { $push: { categoria: "$_id.categoria", total_gastado: "$total_gastado_categoria" } },
+      categoria_preferida_info: {
+        $max: { // Usar $max para encontrar la categoría con el mayor gasto
+          total_gastado: "$total_gastado_categoria",
+          categoria: "$_id.categoria"
+        }
+      }
+    }
+  },
+
+  // 10. Proyectar el resultado final
+  {
+    $project: {
+      _id: 0,
+      email_cliente: "$_id",
+      nombre: "$nombre_cliente",
+      pais: "$pais_cliente",
+      total_gastado: { $round: [ "$total_gastado", 2 ] },
+      numero_compras: 1,
+      primera_compra: { $dateToString: { format: "%Y-%m-%d", date: "$primera_compra" } },
+      ultima_compra: { $dateToString: { format: "%Y-%m-%d", date: "$ultima_compra" } },
+      producto_favorito: "$producto_favorito",
+      cantidad_producto_favorito: "$producto_favorito_info.total_cantidad",
+      categoria_preferida: "$categoria_preferida_info.categoria",
+      total_gastado_categoria_preferida: { $round: [ "$categoria_preferida_info.total_gastado", 2 ] }
+    }
+  }
+])

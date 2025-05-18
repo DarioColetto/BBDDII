@@ -1,0 +1,14 @@
+db.productos.aggregate([
+    {
+      $unwind: "$valoraciones"
+    },
+    {
+      $group: {
+        _id: "$valoraciones.puntuacion",
+        cantidad: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { cantidad: -1 }
+    }
+  ]);
